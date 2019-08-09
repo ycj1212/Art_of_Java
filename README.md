@@ -231,3 +231,130 @@ factor -> variable, number, or (expression)
 첫째는 오직 리터럴 값으로만 구성된 double타입의 부동 소수점 표기법을 분석하고 평가할 것이다.
 이 파서는 파싱의 recursive-descent 메소드의 기초를 설명한다.
 둘째는 변수를 사용하는 능력을 더한다.
+
+### **Dissecting an Expression**
+
+식을 평가하기 위해서, 파서는 식의 개별 구성요소를 공급 받을 필요가 있다.
+예를 들면, 식 `A*B-(W+10)` 은 이 개별 부분을 포함한다 : A, *, B, -, (, W, +, 10, 그리고 ).
+파싱의 언어에서, 각 식의 구성요소는 토큰(token)이라 불리고, 각 토큰은 식의 불가분의 단위(unit)를 나타낸다.
+파싱을 tokenizing하는 것은 파싱의 기본이기 때문에, 파서 자체를 검토하기 전에 살펴보자.
+
+식을 토큰으로 번역하기 위해, 당신은 식에서 개별적으로 각 토큰을 연속적으로 반환하여 처음부터 끝까지 이동하는 메소드를 필요로 한다.
+그 메소드는 또한 토큰의 타입을 결정하고 식의 끝을 감지할 수 있어야 한다.
+여기서 개발된 파서에서, 이 작업을 수행하는 메소드는 getToken()이라 불린다.
+
+이 장에서 두 파서 모두 Parser 클래스에서 캡슐화 되어 있다.
+비록 이 클래스는 나중에 자세하게 설명되지만, 이제 첫 부분을 보여줘야 getToken()의 작업이 설명될 수 있다.
+파서는 여기에 보이는 final 변수와 필드를 정의하는 것에 의해 시작한다 :
+
+class Parser {
+    // These are the token types.
+    final int NONE = 0;
+    final int DELIMITER = 1;
+    final int VARIABLE = 2;
+    final int NUMBER = 3;
+
+    // These are the types of syntax errors.
+    final int SYNTAX = 0;
+    final int UNBALPARENS = 1;
+    final int NOEXP = 2;
+    final int DIVBYZERO = 3;
+
+    // This token indicates end-of-expression.
+    final String EOE = "\0";
+
+    private String exp;     // refers to expression string
+    private int expIdx;     // current index into the expression
+    private String token;   // holds current token
+    private int tokType;    // holds token's type
+
+처음에 파서는 토큰의 타입을 나타내는 값을 정의한다.
+식을 분석할 때, 각 토큰은 그것과 연관된 타입을 가지고 있어야 한다.
+이 장에서 개발된 파서들에는 오직 세 가지 타입이 필요하다 : 변수, 숫자 그리고 delimiter.
+이들은 VARIABLE, NUMBER, DELIMITER 값에 의해 나타난다.
+DELIMITER 카테고리는 연산자와 괄호 둘 다 사용된다.
+NONE 타입은 단지 정의되지 않은 토큰을 위한 placeholder값이다.
+
+다음에, 파서는 식을 평가하고 분석할 때 발생할 수 있는 다양한 오류를 나타내는 값을 정의한다.
+SYNTAX는 malformed 식을 결과로 하는 오류의 넓은 범주를 나타낸다.
+UNBALPARENS는 비균형적인 괄호를 나타낸다.
+NOEXP는 파서가 실행될 때 식이 없을 때 제출되는 오류이다.
+DIVBYZERO는 divide-by-zero 오류를 나타낸다.
+
+final 변수 EOE는 식의 끝에 도달했음을 나타내는 토큰이다.
+
+분석되는 식을 잡는 문자열에 대한 참조는 exp 안에 저장된다.
+그러므로, exp는 "10+4"와 같은 문자열을 참조할 것이다.
+expIdx에 잡혀있는 문자열 내의 다음 토큰의 인덱스는 처음에는 0이다.
+얻어진 토큰은 토큰에 저장되고, 토큰의 타입은 tokType에 저장된다.
+그들이 오직 파서에 의해 사용되고 바깥 코드에 의해 수정되지 말아야되기 때문에 이들의 필드는 private이다.
+
+getToken() 메소드는 여기에 보여진다.
+호출될 때마다, expIdx에서 시작하는 exp에 의해 참조되는 문자열 안에 있는 식으로부터 다음 토큰을 얻는다.
+다시 말해서, getToken()이 호출될 때마다, exp[expIdx]에서 다음 토큰을 얻는다.
+그것은 토큰 필드에 이 토큰을 넣는다.
+그것은 tokType 안에 토큰의 타입을 넣는다.
+getToken()은 isDelim() 메소드를 사용하고, 또한 여기에 보여진다:
+
+// Obtain the next token.
+private void getToken()
+{
+    tokType = NONE;
+    token = "";
+
+    // Check for end of expression.
+    if(expIdx == exp.length()) {
+        token = EOE;
+        return;
+    }
+
+    // Skip over white space.
+    while(expIdx < exp.length() && Character.isWhitespace(exp.charAt(expIdx)))
+        ++expIdx;
+
+    // Trailing whitespace ends expression.
+    if(expIdx == exp.length()) {
+        token = EOE;
+        return;
+    }
+
+    if(isDelim(exp.charAt(expIdx))) { // is operator
+        token += exp.charAt(expIdx);
+        expIdx++;
+        tokType = DELIMITER;
+    }
+    else if(Character.isLetter(exp.charAt(expIdx))) { // is variable
+        while(!isDelim(exp.charAt(expIdx))) {
+            token += exp.charAt(expIdx);
+            expIdx++;
+            if(expIdx >= exp.length())
+                break;
+        }
+        tokType = VARIABLE;
+    }
+    else if(Character.isDigit(exp.charAt(expIdx))) { // is number
+        while(!isDelim(exp.charAt(expIdx))) {
+            token += exp.charAt(expIdx);
+            expIdx++;
+            if(expIdx >= exp.length())
+                break;
+        }
+        tokType = NUMBER;
+    }
+    else { // unknown character terminates expression
+        token = EOE;
+        return;
+    }
+}
+
+// Return true if c is a delimiter.
+private boolean isDelim(char c)
+{
+    if((" +-/*%^=()".indexOf(c) != -1))
+        return true;
+    return false;
+}
+
+
+
+}
