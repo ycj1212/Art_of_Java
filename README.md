@@ -355,6 +355,43 @@ private boolean isDelim(char c)
     return false;
 }
 
+getToken()을 자세히 보자.
+처음 몇 번의 초기화 후에, getToken()은 expIdx와 exp.length()가 동등한지 확인하여 식의 끝에 도달했는지 확인한다.
+expIdx가 분석되는 식에 대한 인덱스이기 때문에, 만약 식 문자열 길이와 같다면, 그 식은 완전히 분석된다.
+
+만약 여전히 식에서 검색할 많은 토큰이 있다면, getToken()은 먼저 leading spaces를 건너뛴다.
+만약 trailing 이 식의 끝에 위치한다면, 식의 마지막 토큰 EOE는 반환된다.
+그렇지 않으면, 공백이 생략되면, exp[expIdx]는 digit, 변수, 또는 연산자 중 하나를 포함한다.
+만약 다음 문자가 연산자라면, token안에 문자열로 반환되고, DELIMITER는 tokType안에 저장된다.
+만약 다음 문자가 letter라면, 변수의 하나로 추정된다.
+그것은 token에서 문자열로 반환되고, tokType에는 VARIABLE값이 할당된다.
+만약 다음 문자가 숫자(digit)라면, 전체의 숫자는 읽어지고 token안에 문자열 형식안에 저장되고, 그것의 타입은 NUMBER이다.
+마지막으로, 만약 다음 문자가 아무것도 아니라면, token은 EOE로 할당된다.
+
+getToken()에서 코드를 명확하게 하기 위해, 오류 검사의 일정 양이 생략되고, 몇 가지 가정이 이루어졌다.
+예를 들면, 어떤 인식되지 않은 문자는 공백이 선행되는 한 식을 끝낼 수 있다.
+또한 이 버전에서, 변수는 어떤 길이라도 될 수 있지만, 단지 첫 letter만 중요하다.
+당신의 특정 응용 프로그램이 지시하는 대로 당신은 더 많은 오류 검사를 추가할 수 있고 다른 세부 사항을 추가할 수 있다.
+
+토큰화 과정을 더 잘 이해하려면, 다음 식에서 각 토큰과 타입이 반환하는 것을 공부해라:
+
+`A+100-(B*C)/2`
+
+Token   Token Type
+A       VARIABLE
++       DELIMITER
+100     NUMBER
+-       DELIMITER
+(       DELIMITER
+B       VARIABLE
+*       DELIMITER
+C       VARIABLE
+)       DELIMITER
+/       DELIMITER
+2       NUMBER
+
+토큰은 단지 단일 문자를 포함하더라도, 항상 문자열을 보유한다는 것을 기억해라.
+마지막 특징 : 비록 자바가 StringTokenizer클래스에 의해 지원되는 것과 같이 매우 유용한 내장 토큰화 기능을 포함하더라도, getToken()과 같이, 전용 tokenizer를 사용하여 이 작업을 직접 처리하는 것이 좋다.
 
 
 }
