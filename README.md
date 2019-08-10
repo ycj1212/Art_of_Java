@@ -566,8 +566,108 @@ class Parser {
                 getToken();
                 result = evalExp2();
                 if(!token.equals(")"))
-                    
+                    handleErr(UNBALPARENS);
+                getToken();
+            }
+            else result = atom();
+
+            return result;
+        }
+
+        // Get the value of a number.
+        private double atom() throws ParseException
+        {
+            double result = 0.0;
+
+            switch(tokType) {
+                case NUMBER:
+                    try {
+                        result = Double.parseDouble(token);
+                    } catch (NumberFormatException exc) {
+                        handleErr(SYNTAX);
+                    }
+                    getToken();
+                    break;
+                default:
+                    handleErr(SYNTAX);
+                    break;
+            }
+            return result;
+        }
+
+        // Handle an error.
+        private void handleErr(int error) throws ParserException
+        {
+            String[] err = {
+                "Syntax Error",
+                "Unbalanced Parentheses",
+                "No Expression Present",
+                "Division by Zero"
+            };
+
+            throw new ParserException(err[error]);
+        }
+
+        // Obtain the next token.
+        private void getToken()
+        {
+            tokType = NONE;
+            token = "";
+            
+            // Check for end of expression.
+            if(expIdx == exp.length()) {
+                token = EOE;
+                return;
+            }
+
+            // Skip over white space.
+            while(expIdx < exp.length() && Character.isWhitespace(exp.charAt(expIdx)))
+                ++expIdx;
+
+            // Trailing whitespace ends expression.
+            if(expIdx == exp.length()) {
+                token = EOE;
+                return;
+            }
+
+            if(isDelim(exp.charAt(expIdx))) { // is operator
+                token += exp.charAt(expIdx);
+                expIdx++;
+                tokType = DELIMITER;
+            }
+            else if(Character.isLetter(exp.charAt(expIdx))) { // is variable
+                while(!isDelim(exp.charAt(expIdx))) {
+                    token += exp.charAt(expIdx);
+                    expIdx++;
+                    if(expIdx >= exp.length())
+                        break;
+                }
+                tokType = VARIABLE;
+            }
+            else if(Character.isDigit(exp.charAt(expIdx))) { // is number
+                while(!isDelim(exp.charAt(expIdx))) {
+                    token += exp.charAt(expIdx);
+                    expIdx++;
+                    if(expIdx >= exp.length()) break;
+                }
+                tokType = NUMBER;
+            }
+            else { // unknown character terminates expression
+                token = EOE;
+                return;
             }
         }
+
+        // Return true if c is a delimiter.
+        private boolean isDelim(char c)
+        {
+            if((" +-/*%^=()".indexOf(c) != -1))
+                return true;
+            return false;
+        }
     }
+
+    ParserException 클래스가 코드의 정상에 가깝게 선언된 것을 알아채라.
+    이것은 white processing the expression 오류를 마주한다면 파서에 의해 던져 질 exception의 타입이다.
+    
 }
