@@ -393,5 +393,181 @@ C       VARIABLE
 토큰은 단지 단일 문자를 포함하더라도, 항상 문자열을 보유한다는 것을 기억해라.
 마지막 특징 : 비록 자바가 StringTokenizer클래스에 의해 지원되는 것과 같이 매우 유용한 내장 토큰화 기능을 포함하더라도, getToken()과 같이, 전용 tokenizer를 사용하여 이 작업을 직접 처리하는 것이 좋다.
 
+### **A Simple Expression Parser**
 
+여기 파서의 첫 번째 버전이 있다.
+그것은 리터럴, 연산자, 괄호로만 구성된 식을 평가할 수 있다.
+비록 getToken()이 변수를 처리할 수 있지만, 파서는 변수를 처리하지 않는다.
+당신이 이 단순화된 파서가 작동하는 방법을 이해한다면, 우리는 변수를 처리하는 기능을 추가할 것이다.
+
+/*
+    This module contains the recursive descent
+    parser that does not use variables.
+*/
+
+// Exception class for parser errors.
+class ParserException extends Exception {
+    String errStr; // describes the error
+
+    public ParserException(String str) {
+        errStr = str;
+    }
+
+    public String toString() {
+        return errStr;
+    }
+}
+
+class Parser {
+    // These are the token types.
+    final int NONE = 0;
+    final int DELIMITER = 1;
+    final int VARIABLE = 2;
+    final int NUMBER = 3;
+    
+    // These are the types of syntax errors.
+    final int SYNTAX = 0;
+    final int UNBALPARENS = 1;
+    final int NOEXP = 2;
+    final int DIVBYZERO = 3;
+
+    // This token indicates end-of-expression.
+    final String EOE = "\0";
+    
+    private String exp;     // refers to expression string
+    private int expIdx;     // current index into the expression
+    private String token;   // holds current token
+    private int tokType;    // holds token's type
+
+    // Parser entry point.
+    public double evaluate(String expstr) throws ParserException
+    {
+        double result;
+        exp = expstr;
+        expIdx = 0;
+        
+        getToken();
+        if(token.equals(EOE))
+            handleErr(NOEXP); // no expression present
+        
+        // Parse and evaluate the expression.
+        result = evalExp2();
+
+        if(!token.equals(EOE)) // last token must be EOE
+            handleErr(SYNTAX):
+
+        return result;
+    }
+
+    // Add or subtract two terms.
+    private double evalExp2() throws ParserException
+    {
+        char op;
+        double result;
+        double partialResult;
+
+        result = evalExp3();
+        
+        while((op = token.charAt(0)) == '+' || op == '-') {
+            getToken();
+            partialResult = evalExp3();
+            switch(op) {
+                case '-':
+                    result = result - partialResult;
+                    break;
+                case '+':
+                    result = result + partialResult;
+                    break;
+            }
+        }
+        return result;
+    }
+
+    // Multiply or divide two factors.
+    private double evalExp3() throws ParserException
+    {
+        char op;
+        double result;
+        double partialResult;
+
+        result = evalExp4();
+
+        while((op = token.charAt(0)) == '*' || op == '/' || op == '%') {
+            getToken();
+            partialResult = evalExp4();
+            switch(op) {
+                case '*':
+                    result = result * partialResult;
+                    break;
+                case '/':
+                    if(partialResult == 0.0)
+                        handleErr(DIVBYZERO);
+                    result = result / partialResult;
+                    break;
+                case '%':
+                    if(partialResult == 0.0)
+                        handleErr(DIVBYZERO);
+                    result = result % partialResult;
+                    break;
+            }
+        }
+        return result;
+    }
+
+    // Process an exponent.
+    private double evalExp4() throws ParserException
+    {
+        double result;
+        double partialResult;
+        double ex;
+        int t;
+
+        result = evalExp5();
+
+        if(token.equals("^")) {
+            getToken();
+            partialResult = evalExp4();
+            ex = result;
+            if(partialResult == 0.0) {
+                result = 1.0;
+            }
+            else {
+                for(t=(int)partialResult-1; t>0; t--)
+                    result = result * ex;
+            }
+            return result;
+        }
+
+        // Evaluate a unary + or -.
+        private double evalExp5() throws ParserException
+        {
+            double result;
+            String op;
+
+            op = "";
+            if((tokType == DELIMITER) && token.equals("+") || token.equals("-")) {
+                op = token;
+                getToken();
+            }
+            result = evalExp6();
+            
+            if(op.equlas("-"))
+                result = -result;
+
+            return result;
+        }
+
+        // Process a parenthesized expression.
+        private double evalExp6() throws ParserException
+        {
+            double result;
+
+            if(token.equals("(")) {
+                getToken();
+                result = evalExp2();
+                if(!token.equals(")"))
+                    
+            }
+        }
+    }
 }
