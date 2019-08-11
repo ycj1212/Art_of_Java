@@ -668,6 +668,56 @@ class Parser {
     }
 
     ParserException 클래스가 코드의 정상에 가깝게 선언된 것을 알아채라.
-    이것은 white processing the expression 오류를 마주한다면 파서에 의해 던져 질 exception의 타입이다.
+    이것은 식을 처리하는 동안 오류를 마주한다면 파서에 의해 던져 질 예외의 타입이다.
+    이 예외는 파서를 사용하는 코드에 의해 다뤄질 필요가 있을 것이다.
+
+    그것을 보여주는 파서는 다음 연산자들을 다룰 수 있다 : +,-,*,/,%.
+    게다가, 정수 거듭제곱(^)과 unary minus를 다룰 수 있다.
+    그 파서는 괄호를 올바르게 다룰 수 있다.
+
+    파서를 사용하려면, 처음에 Parser타입의 객체를 생성해라.
+    그러면 당신이 인수로서 평가되길 원하는 식 문자열을 passing하는  evaluate()를 호출해라.
+    그 결과는 반환된다.
+    왜냐하면, Parser는 ParserException을 던지기 때문에, 당신의 application은 각 예외를 다룰 필요가 있다.
+    다음 예시는 그 파서를 입증한다:
+
+    // Demonstrate the parser.
+    import java.io.*;
+
+    class PDemo {
+        public static void main(String[] args) trows IOException
+        {
+            String expr;
+
+            BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+            Parser p = new Parser();
+
+            System.out.println("Enter an empty expression to stop.");
+
+            for(;;) {
+                System.out.print("Enter expression : ");
+                expr = br.readLine();
+                if(expr.equals(""))
+                    break;
+                try {
+                    System.out.println("Result: " + p.evaluate(expr));
+                    System.out.println();
+                } catch (ParserException exc) {
+                    System.out.println(exc);
+                }
+            }
+        }
+    }
+
+    여기 실행 예시가 있다:
+
+    Enter an empty expression to stop.
+    Enter expression : 10-2*3
+    Result : 4.0
+
+    Enter expression : (10-2)*3
+    Result : 24.0
+
+    Enter expression : 10/3.5
+    Result : 2.857142857142857
     
-}
