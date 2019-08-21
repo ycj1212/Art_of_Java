@@ -1,6 +1,6 @@
-# **Art_of_Java**
+# Art_of_Java
 
-## **Contents**
+## Contents
 
 1. [**The Genius of Java**](Art_of_Java_Ch1.md)
 
