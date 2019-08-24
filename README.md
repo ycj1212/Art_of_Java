@@ -10,3 +10,8 @@
     - [A simple calculator applet](Calc.java)
 
 3. [**Implementing Language Interpreters in Java**](Art_of_Java_Ch3.md)
+
+    - [The Small BASIC Interpreter](SBasic.java)
+    - [Demonstrate the Small BASIC Interpreter](SBDemo.java)
+
+4. 

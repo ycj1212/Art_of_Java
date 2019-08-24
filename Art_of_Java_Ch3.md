@@ -97,3 +97,274 @@ Small BASIC 인터프리터는 두 개의 주된 하위시스템을 포함한다
 수식 파서는 숫자 식을 다루고, 인터프리터는 실제로 프로그램을 실행한다.
 그 수식 파서는 챕터2에 보여지는 한가지로부터 적용된다.
 그것이 여기 사용되면서, 그것은 수식 파서를 분석한다.
+
+
+
+### The Interpreter
+
+SBasic의 인터프리터 부분은 실제로 프로그램을 실행하는 코드이다.
+일반적으로, 각 문장(할당을 제외하고)이 키워드와 함께 시작하기 때문에 Small BASIC 프로그램을 번역하는 것은 꽤 쉽다.
+그러므로, 그 인터프리터는 각 줄의 시작 부분에 키워드를 포함하므로써 작동하고, 키워드가 특정하는 것을 한다.
+이 프로세스는 전체의 프로그램이 번역될 때 까지 반복한다.
+이 구역의 나머지는 인터프리터의 각 부분을 세세하게 시험한다.
+
+#### The InterpreterException Class
+
+인터프리터의 시작 부분에서, 당신은 InterpreterException 클래스를 발견할 것이다.
+이것은 에러가 발생한다면 인터프리터가 던질 예외의 타입이다.
+SBasic을 사용하는 코드는 이 예외를 다룰 것이다.
+예외들은 문법 에러, 입출력 에러, 숫자 식의 에러에 의해 야기될 수 있다.
+
+#### The SBasic Constructor
+
+생성자는 당신이 번역을 원하는 Small BASIC 파일의 이름을 넘겨질 수 있다.
+그러면 그것은 임시 버퍼를 이 파일이 읽혀지는 것으로 생성한다.
+이 버퍼의 크기는 PROG_SIZE로 특정화되고, 임의로 10,000으로 설정한다.
+이것은 SBasic이 번역할 수 있는 가장 큰 프로그램의 크기이다.
+당신은 원하는 크기로 변경할 수 있다.
+
+다음, 그 설정자는 loadProgram()을 호출하고, 실제로 프로그램을 읽고, 그것의 크기, 문자 또는 실패인 -1를 반환한다.
+그러면, 정확하게 프로그램의 크기인 새 배열은 생성되고, prog를 할당하는 참조이다.
+마지막으로, 그 프로그램은 이 배열로 복사된다.
+그러므로, prog에 의해 참조되는 배열의 크기는 정확하게 프로그램의 크기와 같을 것이다.
+
+loadProgram() 메소드는 여기에 나타난다:
+
+```
+// Load a program.
+private int loadProgram(char[] p, String fname)
+throws InterpreterException
+{
+int size = 0;
+try {
+FileReader fr = new FileReader(fname);
+BufferedReader br = new BufferedReader(fr);
+size = br.read(p, 0, PROG_SIZE);
+fr.close();
+} catch(FileNotFoundException exc) {
+handleErr(FILENOTFOUND);
+} catch(IOException exc) {
+handleErr(FILEIOERROR);
+}
+// If file ends with an EOF mark, back up.
+if(p[size-1] == (char) 26) size--;
+return size; // return size of program
+}
+```
+
+이 메소드의 대부분은 쉽게 이해될 수 있으나, 이 줄에 각별한 주의를 가한다:
+
+```
+// If file ends with an EOF mark, back up.
+if(p[size-1] == (char) 26)  size--;
+```
+
+내용이 나타나면서, 이 줄은 파일의 끝인 EOF 표시를 제거한다.
+아시다시피, 몇몇 텍스트 편집기는 end-of-file 마커(일반적으로 값 26)를 추가한다.
+loadProgram()이 존재한다면 마크를 제거하여 두 가지 경우를 모두 다룬다.
+
+#### The Keywords
+
+Small BASIC이 번역하는 BASIC의 하위집합은 이 키워드들에 의해 나타난다.
+
+```
+PRINT
+INPUT
+IF
+THEN
+FOR
+NEXT
+TO
+GOTO
+GOSUB
+RETURN
+END
+```
+
+이 키워드들의 내부적 표현은 줄의 끝을 위한 EOL을 더하고, 여기 보여지는 것처럼, SBasic에서 final값으로 선언된다.
+
+```
+// Internal representation of the Small BASIC keywords.
+final int UNKNCOM = 0;
+final int PRINT = 1;
+final int INPUT = 2;
+final int IF = 3;
+final int THEN = 4;
+final int FOR = 5;
+final int NEXT = 6;
+final int TO = 7;
+final int GOTO = 8;
+final int GOSUB = 9;
+final int RETURN = 10;
+final int END = 11;
+final int EOL = 12;
+```
+
+UNKNCOM의 값은 알려지지 않은 키워드를 나타내는 lookUp() 메소드에 의해 사용된다.
+
+키워드의 외부적 표현에서 내부적 표현으로의 변환을 촉진시키기 위해, 외부적, 내부적 형식 둘 다 Keyword 객체들로 구성된 kwTable이라 불리는 테이블에 잡힌다.
+둘 다 여기에 보인다:
+
+```
+// This class links keywords with their keyword tokens.
+class Keyword {
+    String keyword; // string form
+    int keywordTok; // internal representation
+    
+    Keyword(String str, int t) {
+        keyword = str;
+        keywordTok = t;
+    }
+}
+
+/* Table of keywords with their internal representation.
+All keywords must be entered lowercase. */
+Keyword kwTable[] = {
+    new Keyword("print", PRINT), // in this table.
+    new Keyword("input", INPUT),
+    new Keyword("if", IF),
+    new Keyword("then", THEN),
+    new Keyword("goto", GOTO),
+    new Keyword("for", FOR),
+    new Keyword("next", NEXT),
+    new Keyword("to", TO),
+    new Keyword("gosub", GOSUB),
+    new Keyword("return", RETURN),
+    new Keyword("end", END)
+};
+```
+
+다음에 보여진, lookUp() 메소드는 토큰을 내부적 표현으로 변환하는 kwTable을 사용한다.
+만약 매치가 발견되지 않는다면, UNKNCOM은 반환된다.
+
+```
+/* Look up a token's internal representation in the
+token table. */
+private int lookUp(String s)
+{
+    int i;
+
+    // Convert to lowercase.
+    s = s.toLowerCase();
+
+    // See if token is in table.
+    for(i=0; i < kwTable.length; i++)
+        if(kwTable[i].keyword.equals(s))
+            return kwTable[i].keywordTok;
+    return UNKNCOM; // unknown keyword
+}
+```
+
+#### The run() Method
+
+SBasic 객체가 생성된 후에, 캡슐화한 프로그램은 run()을 호출에 의해 실행되고, 여기에 보여진다:
+
+```
+// Execute the program.
+public void run() throws InterpreterException {
+    // Initialize for new program run.
+    vars = new double[26];
+    fStack = new Stack();
+    labelTable = new TreeMap();
+    gStack = new Stack();
+    progIdx = 0;
+    
+    scanLabels(); // find the labels in the program
+    
+    sbInterp(); // execute
+}
+```
+
+run() 메소드는 변수의 값, FOR 반복을 위한 스택, 레이블을 위한 트리 맵, GOSUB를 위한 스택을 저장하는 배열을 할당하는 것에 의해 시작된다.
+다음에, 현재 번역되고 있는 프로그램의 위치를 저장하는 progIdx는 0으로 설정된다.
+이 필드들은 run()이 호출되는 각 시간이 설정되서, 같은 프로그램의 실행이 반복되게 한다.
+
+다음에, 레이블을 찾는 프로그램을 스캔하는 scanLabels()가 호출된다.
+한 가지가 발견될 때, 레이블과 그것의 위치는 labelTable 맵에 저장된다.
+실행 전에 모든 레이블을 찾음으로써, 프로그램의 실행속도는 향상된다.
+
+마지막으로, sbInterp()는 프로그램의 실행을 시작하면서 호출된다.
+
+#### The sbInterp() Method
+
+sbInterp() 메소드는 Small BASIC 프로그램의 실행을 시작하고 제어한다.
+이 메소드는 여기에 보여진다:
+
+```
+// Entry point for the Small BASIC interpreter.
+private void sbInterp() throws InterpreterException
+{
+    // This is the interpreter's main loop.
+    do {
+    getToken();
+    // Check for assignment statement.
+    if(tokType==VARIABLE) {
+        putBack(); // return the var to the input stream
+        assignment(); // handle assignment statement
+    }
+    else // is keyword
+        switch(kwToken) {
+        case PRINT:
+            print();
+            break;
+        case GOTO:
+            execGoto();
+            break;
+        case IF:
+            execIf();
+            break;
+        case FOR:
+            execFor();
+            break;
+        case NEXT:
+            next();
+            break;
+        case INPUT:
+            input();
+            break;
+        case GOSUB:
+            gosub();
+            break;
+        case RETURN:
+            greturn();
+            break;
+        case END:
+            return;
+        }
+    } while (!token.equals(EOP));
+}
+```
+
+모든 인터프리터는 프로그램으로부터 다음 토큰을 읽고 그것을 실행하는 적절한 액션을 선택하는 고수준 반복에 의해 작동된다.
+Small BASIC 인터프리터는 예외가 없다.
+이 메인 반복은 sbInterp()에 포함된다.
+이와 같이 작동한다.
+처음에, 한 토큰은 프로그램에 의해 읽혀진다.
+문법 에러가 발견되지 않는다고 추정하면서, 만약 그 토큰이 변수라면, 할당이 발생된다.
+반면에, 그 토큰은 (무시되는 것)줄 번호이거나 키워드가 되어야 한다.
+만약 그것이 키워드라면, 적절한 case 문장은 키워드의 내부적 표현을 포함하는 kwToken의 값을 기반으로 선택된다.
+각각의 키워드는 그 메소드 자체에서 처리되며, 이어지는 섹션에 의해 차례로 설명된다.
+
+#### Assignment
+
+전통적인 BASIC에서, 할당은 연산자가 아니라, 문장이고, Small BASIC에 의해 다뤄지는 방법이다.
+BASIC 할당문의 일반적인 형식은
+`var-name = expression` 이다.
+
+할당문은 여기 보여지는 assignment() 메소드를 사용하면서 번역된다:
+
+```
+// Assign a variable a value.
+private void assignment() throws InterpreterException
+{
+int var;
+double value;
+char vname;
+// Get the variable name.
+getToken();
+vname = token.charAt(0);
+if(!Character.isLetter(vname)) {
+handleErr(NOTVAR);
+return;
+}
+```
