@@ -18,14 +18,14 @@ class InterpreterException extends Exception {
 // The Small BASIC interpreter.
 class SBasic {
 	final int PROG_SIZE = 10000; // maximum program size
-// These are the token types.
+	// These are the token types.
 	final int NONE = 0;
 	final int DELIMITER = 1;
 	final int VARIABLE = 2;
 	final int NUMBER = 3;
 	final int COMMAND = 4;
 	final int QUOTEDSTR = 5;
-// These are the types of errors.
+	// These are the types of errors.
 	final int SYNTAX = 0;
 	final int UNBALPARENS = 1;
 	final int NOEXP = 2;
@@ -43,7 +43,7 @@ class SBasic {
 	final int FILENOTFOUND = 14;
 	final int FILEIOERROR = 15;
 	final int INPUTIOERROR = 16;
-// Internal representation of the Small BASIC keywords.
+	// Internal representation of the Small BASIC keywords.
 	final int UNKNCOM = 0;
 	final int PRINT = 1;
 	final int INPUT = 2;
@@ -57,16 +57,16 @@ class SBasic {
 	final int RETURN = 10;
 	final int END = 11;
 	final int EOL = 12;
-// This token indicates end-of-program.
+	// This token indicates end-of-program.
 	final String EOP = "\0";
-// Codes for double-operators, such as <=.
+	// Codes for double-operators, such as <=.
 	final char LE = 1;
 	final char GE = 2;
 	final char NE = 3;
-// Array for variables.
+	// Array for variables.
 	private double vars[];
 
-// This class links keywords with their keyword tokens.
+	// This class links keywords with their keyword tokens.
 	class Keyword {
 		String keyword; // string form
 		int keywordTok; // internal representation
@@ -92,18 +92,18 @@ class SBasic {
 	private String token; // holds current token
 	private int tokType; // holds token's type
 	private int kwToken; // internal representation of a keyword
-// Support for FOR loops.
 
+	// Support for FOR loops.
 	class ForInfo {
 		int var; // counter variable
 		double target; // target value
 		int loc; // index in source code to loop to
 	}
 
-// Stack for FOR loops.
+	// Stack for FOR loops.
 	private Stack fStack;
 
-// Defines label table entries.
+	// Defines label table entries.
 	class Label {
 		String name; // label
 		int loc; // index of label's location in source file
@@ -114,30 +114,30 @@ class SBasic {
 		}
 	}
 
-// A map for labels.
+	// A map for labels.
 	private TreeMap labelTable;
-// Stack for gosubs.
+	// Stack for gosubs.
 	private Stack gStack;
-// Relational operators.
+	// Relational operators.
 	char rops[] = { GE, NE, LE, '<', '>', '=', 0 };
 
 	String relops = new String(rops);
 
-// Constructor for SBasic.
+	// Constructor for SBasic.
 	public SBasic(String progName) throws InterpreterException {
 		char tempbuf[] = new char[PROG_SIZE];
 		int size;
-// Load the program to execute.
+		// Load the program to execute.
 		size = loadProgram(tempbuf, progName);
 		if (size != -1) {
-// Create a properly sized array to hold the program.
+			// Create a properly sized array to hold the program.
 			prog = new char[size];
-// Copy the program into program array.
+			// Copy the program into program array.
 			System.arraycopy(tempbuf, 0, prog, 0, size);
 		}
 	}
 
-// Load a program.
+	// Load a program.
 	private int loadProgram(char[] p, String fname) 
 			throws InterpreterException {
 		int size = 0;
@@ -151,15 +151,15 @@ class SBasic {
 		} catch (IOException exc) {
 			handleErr(FILEIOERROR);
 		}
-// If file ends with an EOF mark, back up.
+		// If file ends with an EOF mark, back up.
 		if (p[size - 1] == (char) 26)
 			size--;
 		return size; // return size of program
 	}
 
-// Execute the program.
+	// Execute the program.
 	public void run() throws InterpreterException {
-// Initialize for new program run.
+		// Initialize for new program run.
 		vars = new double[26];
 		fStack = new Stack();
 		labelTable = new TreeMap();
@@ -169,12 +169,12 @@ class SBasic {
 		sbInterp(); // execute
 	}
 
-// Entry point for the Small BASIC interpreter.
+	// Entry point for the Small BASIC interpreter.
 	private void sbInterp() throws InterpreterException {
-// This is the interpreter's main loop.
+		// This is the interpreter's main loop.
 		do {
 			getToken();
-// Check for assignment statement.
+			// Check for assignment statement.
 			if (tokType == VARIABLE) {
 				putBack(); // return the var to the input stream
 				assignment(); // handle assignment statement
@@ -210,11 +210,11 @@ class SBasic {
 		} while (!token.equals(EOP));
 	}
 
-// Find all labels.
+	// Find all labels.
 	private void scanLabels() throws InterpreterException {
 		int i;
 		Object result;
-// See if the first token in the file is a label.
+		// See if the first token in the file is a label.
 		getToken();
 		if (tokType == NUMBER)
 			labelTable.put(token, new Integer(progIdx));
@@ -226,14 +226,14 @@ class SBasic {
 				if (result != null)
 					handleErr(DUPLABEL);
 			}
-// If not on a blank line, find next line.
+			// If not on a blank line, find next line.
 			if (kwToken != EOL)
 				findEOL();
 		} while (!token.equals(EOP));
 		progIdx = 0; // reset index to start of program
 	}
 
-// Find the start of the next line.
+	// Find the start of the next line.
 	private void findEOL() {
 		while (progIdx < prog.length && prog[progIdx] != '\n')
 			++progIdx;
@@ -241,33 +241,33 @@ class SBasic {
 			progIdx++;
 	}
 
-// Assign a variable a value.
+	// Assign a variable a value.
 	private void assignment() throws InterpreterException {
 		int var;
 		double value;
 		char vname;
-// Get the variable name.
+		// Get the variable name.
 		getToken();
 		vname = token.charAt(0);
 		if (!Character.isLetter(vname)) {
 			handleErr(NOTVAR);
 			return;
 		}
-// Convert to index into variable table.
+		// Convert to index into variable table.
 		var = (int) Character.toUpperCase(vname) - 'A';
-// Get the equal sign.
+		// Get the equal sign.
 		getToken();
 		if (!token.equals("=")) {
 			handleErr(EQUALEXPECTED);
 			return;
 		}
-// Get the value to assign.
+		// Get the value to assign.
 		value = evaluate();
-// Assign the value.
+		// Assign the value.
 		vars[var] = value;
 	}
 
-// Execute a simple version of the PRINT statement.
+	// Execute a simple version of the PRINT statement.
 	private void print() throws InterpreterException {
 		double result;
 		int len = 0, spaces;
@@ -309,11 +309,11 @@ class SBasic {
 			handleErr(SYNTAX);
 	}
 
-// Execute a GOTO statement.
+	// Execute a GOTO statement.
 	private void execGoto() throws InterpreterException {
 		Integer loc;
 		getToken(); // get label to go to
-// Find the location of the label.
+		// Find the location of the label.
 		loc = (Integer) labelTable.get(token);
 		if (loc == null)
 			handleErr(UNDEFLABEL); // label not defined
@@ -321,7 +321,7 @@ class SBasic {
 			progIdx = loc.intValue();
 	}
 
-// Execute an IF statement.
+	// Execute an IF statement.
 	private void execIf() throws InterpreterException {
 		double result;
 		result = evaluate(); // get value of expression
@@ -339,7 +339,7 @@ class SBasic {
 			findEOL(); // find start of next line
 	}
 
-// Execute a FOR loop.
+	// Execute a FOR loop.
 	private void execFor() throws InterpreterException {
 		ForInfo stckvar = new ForInfo();
 		double value;
@@ -350,7 +350,7 @@ class SBasic {
 			handleErr(NOTVAR);
 			return;
 		}
-// Save index of control var.
+		// Save index of control var.
 		stckvar.var = Character.toUpperCase(vname) - 'A';
 		getToken(); // read the equal sign
 		if (token.charAt(0) != '=') {
@@ -374,17 +374,17 @@ class SBasic {
 				getToken();
 	}
 
-// Execute a NEXT statement.
+	// Execute a NEXT statement.
 	private void next() throws InterpreterException {
 		ForInfo stckvar;
 		try {
-// Retrieve info for this For loop.
+			// Retrieve info for this For loop.
 			stckvar = (ForInfo) fStack.pop();
 			vars[stckvar.var]++; // increment control var
-// If done, return.
+			// If done, return.
 			if (vars[stckvar.var] > stckvar.target)
 				return;
-// Otherwise, restore the info.
+			// Otherwise, restore the info.
 			fStack.push(stckvar);
 			progIdx = stckvar.loc; // loop
 		} catch (EmptyStackException exc) {
@@ -392,7 +392,7 @@ class SBasic {
 		}
 	}
 
-// Execute a simple form of INPUT.
+	// Execute a simple form of INPUT.
 	private void input() throws InterpreterException {
 		int var;
 		double val = 0.0;
@@ -400,7 +400,7 @@ class SBasic {
 		BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 		getToken(); // see if prompt string is present
 		if (tokType == QUOTEDSTR) {
-// if so, print it and check for comma
+			// if so, print it and check for comma
 			System.out.print(token);
 			getToken();
 			if (!token.equals(","))
@@ -408,7 +408,7 @@ class SBasic {
 			getToken();
 		} else
 			System.out.print("? "); // otherwise, prompt with ?
-// get the input var
+		// get the input var
 		var = Character.toUpperCase(token.charAt(0)) - 'A';
 		try {
 			str = br.readLine();
@@ -425,27 +425,27 @@ class SBasic {
 		vars[var] = val; // store it
 	}
 
-// Execute a GOSUB.
+	// Execute a GOSUB.
 	private void gosub() throws InterpreterException {
 		Integer loc;
 		getToken();
-// Find the label to call.
+		// Find the label to call.
 		loc = (Integer) labelTable.get(token);
 		if (loc == null)
 			handleErr(UNDEFLABEL); // label not defined
 		else {
-// Save place to return to.
+			// Save place to return to.
 			gStack.push(new Integer(progIdx));
-// Start program running at that loc.
+			// Start program running at that loc.
 			progIdx = loc.intValue();
 		}
 	}
 
-// Return from GOSUB.
+	// Return from GOSUB.
 	private void greturn() throws InterpreterException {
 		Integer t;
 		try {
-// Restore program index.
+			// Restore program index.
 			t = (Integer) gStack.pop();
 			progIdx = t.intValue();
 		} catch (EmptyStackException exc) {
@@ -453,25 +453,25 @@ class SBasic {
 		}
 	}
 
-// **************** Expression Parser ****************
-// Parser entry point.
+	// **************** Expression Parser ****************
+	// Parser entry point.
 	private double evaluate() throws InterpreterException {
 		double result = 0.0;
 		getToken();
 		if (token.equals(EOP))
 			handleErr(NOEXP); // no expression present
-// Parse and evaluate the expression.
+		// Parse and evaluate the expression.
 		result = evalExp1();
 		putBack();
 		return result;
 	}
 
-// Process relational operators.
+	// Process relational operators.
 	private double evalExp1() throws InterpreterException {
 		double l_temp, r_temp, result;
 		char op;
 		result = evalExp2();
-// If at end of program, return.
+		// If at end of program, return.
 		if (token.equals(EOP))
 			return result;
 		op = token.charAt(0);
@@ -521,7 +521,7 @@ class SBasic {
 		return result;
 	}
 
-// Add or subtract two terms.
+	// Add or subtract two terms.
 	private double evalExp2() throws InterpreterException {
 		char op;
 		double result;
@@ -542,7 +542,7 @@ class SBasic {
 		return result;
 	}
 
-// Multiply or divide two factors.
+	// Multiply or divide two factors.
 	private double evalExp3() throws InterpreterException {
 		char op;
 		double result;
@@ -570,7 +570,7 @@ class SBasic {
 		return result;
 	}
 
-// Process an exponent.
+	// Process an exponent.
 	private double evalExp4() throws InterpreterException {
 		double result;
 		double partialResult;
@@ -590,7 +590,7 @@ class SBasic {
 		return result;
 	}
 
-// Evaluate a unary + or -.
+	// Evaluate a unary + or -.
 	private double evalExp5() throws InterpreterException {
 		double result;
 		String op;
@@ -606,7 +606,7 @@ class SBasic {
 		return result;
 	}
 
-// Process a parenthesized expression.
+	// Process a parenthesized expression.
 	private double evalExp6() throws InterpreterException {
 		double result;
 		if (token.equals("(")) {
@@ -620,7 +620,7 @@ class SBasic {
 		return result;
 	}
 
-// Get the value of a number or variable.
+	// Get the value of a number or variable.
 	private double atom() throws InterpreterException {
 		double result = 0.0;
 		switch (tokType) {
@@ -643,7 +643,7 @@ class SBasic {
 		return result;
 	}
 
-// Return the value of a variable.
+	// Return the value of a variable.
 	private double findVar(String vname) throws InterpreterException {
 		if (!Character.isLetter(vname.charAt(0))) {
 			handleErr(SYNTAX);
@@ -652,7 +652,7 @@ class SBasic {
 		return vars[Character.toUpperCase(vname.charAt(0)) - 'A'];
 	}
 
-// Return a token to the input stream.
+	// Return a token to the input stream.
 	private void putBack() {
 		if (token == EOP)
 			return;
@@ -660,7 +660,7 @@ class SBasic {
 			progIdx--;
 	}
 
-// Handle an error.
+	// Handle an error.
 	private void handleErr(int error) throws InterpreterException {
 		String[] err = { "Syntax Error", "Unbalanced Parentheses", "No Expression Present", "Division by Zero",
 				"Equal sign expected", "Not a variable", "Label table full", "Duplicate label", "Undefined label",
@@ -669,21 +669,21 @@ class SBasic {
 		throw new InterpreterException(err[error]);
 	}
 
-// Obtain the next token.
+	// Obtain the next token.
 	private void getToken() throws InterpreterException {
 		char ch;
 		tokType = NONE;
 		token = "";
 		kwToken = UNKNCOM;
-// Check for end of program.
+		// Check for end of program.
 		if (progIdx == prog.length) {
 			token = EOP;
 			return;
 		}
-// Skip over white space.
+		// Skip over white space.
 		while (progIdx < prog.length && isSpaceOrTab(prog[progIdx]))
 			progIdx++;
-// Trailing whitespace ends program.
+		// Trailing whitespace ends program.
 		if (progIdx == prog.length) {
 			token = EOP;
 			tokType = DELIMITER;
@@ -695,7 +695,7 @@ class SBasic {
 			token = "\r\n";
 			return;
 		}
-// Check for relational operator.
+		// Check for relational operator.
 		ch = prog[progIdx];
 		if (ch == '<' || ch == '>') {
 			if (progIdx + 1 == prog.length)
@@ -729,12 +729,12 @@ class SBasic {
 			return;
 		}
 		if (isDelim(prog[progIdx])) {
-// Is an operator.
+			// Is an operator.
 			token += prog[progIdx];
 			progIdx++;
 			tokType = DELIMITER;
 		} else if (Character.isLetter(prog[progIdx])) {
-// Is a variable or keyword.
+			// Is a variable or keyword.
 			while (!isDelim(prog[progIdx])) {
 				token += prog[progIdx];
 				progIdx++;
@@ -747,7 +747,7 @@ class SBasic {
 			else
 				tokType = COMMAND;
 		} else if (Character.isDigit(prog[progIdx])) {
-// Is a number.
+			// Is a number.
 			while (!isDelim(prog[progIdx])) {
 				token += prog[progIdx];
 				progIdx++;
@@ -756,7 +756,7 @@ class SBasic {
 			}
 			tokType = NUMBER;
 		} else if (prog[progIdx] == '"') {
-// Is a quoted string.
+			// Is a quoted string.
 			progIdx++;
 			ch = prog[progIdx];
 			while (ch != '"' && ch != '\r') {
@@ -773,19 +773,19 @@ class SBasic {
 			return;
 		}
 	}
-// Return true if c is a delimiter.
+	// Return true if c is a delimiter.
 	private boolean isDelim(char c) {
 		if ((" \r,;<>+-/*%^=()".indexOf(c) != -1))
 			return true;
 		return false;
 	}
-// Return true if c is a space or a tab.
+	// Return true if c is a space or a tab.
 	boolean isSpaceOrTab(char c) {
 		if (c == ' ' || c == '\t')
 			return true;
 		return false;
 	}
-// Return true if c is a relational operator.
+	// Return true if c is a relational operator.
 	boolean isRelop(char c) {
 		if (relops.indexOf(c) != -1)
 			return true;
@@ -794,9 +794,9 @@ class SBasic {
 
 	private int lookUp(String s) {
 		int i;
-// Convert to lowercase.
+		// Convert to lowercase.
 		s = s.toLowerCase();
-// See if token is in table.
+		// See if token is in table.
 		for (i = 0; i < kwTable.length; i++)
 			if (kwTable[i].keyword.equals(s))
 				return kwTable[i].keywordTok;

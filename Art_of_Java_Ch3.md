@@ -357,14 +357,47 @@ BASIC 할당문의 일반적인 형식은
 // Assign a variable a value.
 private void assignment() throws InterpreterException
 {
-int var;
-double value;
-char vname;
-// Get the variable name.
-getToken();
-vname = token.charAt(0);
-if(!Character.isLetter(vname)) {
-handleErr(NOTVAR);
-return;
+    int var;
+    double value;
+    char vname;
+
+    // Get the variable name.
+    getToken();
+    vname = token.charAt(0);
+    
+    if(!Character.isLetter(vname)) {
+        handleErr(NOTVAR);
+    return;
+    }
+
+    // Convert to index into variable table.
+    var = (int) Character.toUpperCase(vname) - 'A';
+    
+    // Get the equal sign.
+    getToken();
+    if(!token.equals("=")) {
+        handleErr(EQUALEXPECTED);
+        return;
+    }
+    
+    // Get the value to assign.
+    value = evaluate();
+    
+    // Assign the value.
+    vars[var] = value;
 }
 ```
+
+assignment()가 하는 첫 번째는 프로그램으로부터 토큰을 읽는다.
+이것은 할당된 값을 가지는 변수가 될 것이다.
+만약 타당한 변수가 아니라면, 에러는 제출될 것이다.
+다음에, 동등 표시는 읽혀진다.
+그러면, evaluate()는 변수에 할당하는 값을 얻기 위해 호출된다.
+마지막으로, 그 값은 변수에 할당된다.
+그 메소드는 식 파서와 getToken() 메소드가 많은 "골치아픈" 일을 하기 때문에 놀랍게도 단순하고 깔끔하다.
+
+#### The PRINT Statement
+
+BASIC에서, PRINT 문은 실제로 꽤나 강력하고 유연하다.
+PRINT 문의 모든 기능을 지원하는 메소드를 생성하는 것은 이 장의 범위를 벗어나지만, Small BASIC에 의해 정의된 방법은 가장 중요한 기능을 지원한다.
+PRINT 문의 일반적인 형식은 `PRINT arg-list` 이고, arg-list는 
