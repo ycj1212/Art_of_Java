@@ -401,3 +401,34 @@ assignment()가 하는 첫 번째는 프로그램으로부터 토큰을 읽는�
 BASIC에서, PRINT 문은 실제로 꽤나 강력하고 유연하다.
 PRINT 문의 모든 기능을 지원하는 메소드를 생성하는 것은 이 장의 범위를 벗어나지만, Small BASIC에 의해 정의된 방법은 가장 중요한 기능을 지원한다.
 PRINT 문의 일반적인 형식은 `PRINT arg-list` 이고, arg-list는 
+
+
+
+
+### Enhancing and Expanding the Interpreter
+
+Small BASIC 에 문장을 추가하는 것은 꽤 쉽다.
+오직 이 장에서 나타난 문장에 잡혀있는 일반적인 형식을 따라라.
+다른 변수 타입을 추가한다면, 당신은 그 타입과 변수의 값을 저장하는 클래스를 생성하는 것을 필요로 할 것이고, 변수를 저장하기 위해 이 객체의 배열을 사용한다.
+
+### Creating Your Own Computer Language
+
+Small BASIC을 향상시키고 개선하는 것이 그것의 연산자와 언어 인터프리터가 작동하는 방법과 더 친숙하게 되는 좋은 방법이기 때문에, 당신은 BASIC 언어에 제한되지 않는다.
+당신은 단지 단순화된 자바의 하위집합을 포함하는 어떤 컴퓨터 언어에 대한 인터프리터를 작성하기 위해 이 장에서 규정된 같은 기술을 사용할 수 있다.
+당신은 심지어 당신의 프로그래밍 스타일과 개성을 반영한 당신의 언어를 발명할 수 있다.
+사실, Small BASIC 에 의해 사용되는 인터프리터 뼈대는 당신이 실험하길 원하는 특별한 언어 특징의 어떤 타입을 위한 완벽한 "test bench" 이다.
+예를 들면, REPEAT/UNTIL 반복을 인터프리터에 추가하기 위해, 당신은 이 단계들을 따를 필요가 있다:
+
+1. REPEAT 와 UNTIL 을 키워드로 추가하고, 그들의 정수 값을 정의해라.
+2. REPEAT 와 UNTIL 을 main loop switch 문에 추가해라.
+3. REPEAT 와 UNTIL 문을 진행하는 repeat() 와 until() 메소드를 정의해라.
+(시작점으로 execFor()과 next()를 사용해라.)
+
+For those readers who enjoy a challenge, try creating a script language that automates various computing tasks, such as copying or erasing files, compiling a program, and so on.
+도전을 즐기는 독자들을 위해, 파일 복사 또는 삭제, 프로그램 컴파일, 기타 등등 과 같은 다양한 컴퓨터 작업을 자동화하는 스크립트 언어를 생성해봐라.
+Then create an interpreter for that language.
+그 다음 언어 인터프리터를 생성해라.
+Such a language could provide an alternative to using standard batch files. 
+각 언어가 기존 배치파일을 사용하기 위한 대안을 제공할 수 있다.
+In essence, you could adapt the interpreter to support your own proprietary batch processing scheme.
+본질적으로, 당신은 당신의 일괄처리 계획을 지원하기 위해 인터프리터를 적용할 수 있다.
