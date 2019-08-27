@@ -1,3 +1,5 @@
+package Implementing_Language_Interpreters_in_Java;
+
 // A Small BASIC Interpreter.
 
 import java.io.*;
@@ -111,6 +113,10 @@ class SBasic {
 	private int tokType;	// holds token's type
 	
 	private int kwToken;	// internal representation of a keyword
+	
+	
+	private int repeatIdx;
+	
 	
 	// Support for FOR loops.
 	class ForInfo {
@@ -549,72 +555,23 @@ class SBasic {
 	
 	private void repeat() throws InterpreterException
 	{
-		int repeatVar;
-		int repeatIdx;
-		double repeatTarget;
-		double value;
-		char vname;
-		
 		getToken();
-		if(kwToken != EOL) handleErr(TOEXPECTED);
+		if(kwToken != EOL) handleErr(SYNTAX);
 		
-		repeatIdx = progIdx;
-		
-		while (kwToken != UNTIL) {
-			getToken();
-		}
-		
-		getToken();
-		vname = token.charAt(0);
-		if (!Character.isLetter(vname)) {
-			handleErr(NOTVAR);
-			return;
-		}
-		repeatVar = Character.toUpperCase(vname) - 'A';
-		
-		getToken();
-		if (!isDelim(token.charAt(0)))
-			handleErr(SYNTAX);
-		else if (token.charAt(0) == '=') {
-				value = evaluate();
-				vars[repeatVar] = value;
-		}
-		else {
-			value = evaluate();
-		}
-		
-		if(value == false)
-			handleErr(3);
-		
-		value = evaluate();
-		repeatTarget = value;
-		
-		// IF문도 한번 봐보자
-		
-		// 조건문
-		// 조건에 해당하는 변수 저장
-		
-		progIdx = repeatIdx;
-		// 다시 돌아오기 위한 progIdx
-		// 초기식, 조건식, 증감식, 실행문	
+		repeatIdx = progIdx;	// REPEAT 다음 줄의 시작점
 	}
 	
 	private void until() throws InterpreterException
-	{	// 조건이 맞을 때 까지 반복, 즉 조건이 맞지 않으면 반복, 조건이 맞으면 종료
-		ForInfo stckvar;
-		try {
-			// Retrieve info for this For loop.
-			stckvar = (ForInfo) fStack.pop();
-			vars[stckvar.var]++; // increment control var
-			// If done, return.
-			if (vars[stckvar.var] > stckvar.target)
-				return;
-			// Otherwise, restore the info.
-			fStack.push(stckvar);
-			progIdx = stckvar.loc; // loop
-		} catch (EmptyStackException exc) {
-			handleErr(NEXTWITHOUTFOR);
+	{	
+		double result;
+		
+		result = evaluate();
+		
+		if (result != 0.0) {
+			return;
 		}
+		
+		progIdx = repeatIdx;
 	}
 	
 	

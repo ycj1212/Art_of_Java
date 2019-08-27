@@ -1,14 +1,23 @@
-// Demonstrate the small BASIC Interpreter.
+package Implementing_Language_Interpreters_in_Java;
+
+import java.io.File;
+
+//Demonstrate the Small BASIC Interpreter.
+
 class SBDemo {
-	public static void main(String args[]) {
-		if (args.length != 1) {
+	public static void main(String args[])
+	{
+		String path = new File("src\\Implementing_Language_Interpreters_in_Java\\TEST.BAS").getAbsolutePath();
+		/*
+		if(args.length != 1) {
 			System.out.println("Usage: sbasic <filename>");
 			return;
 		}
+		*/
 		try {
-			SBasic ob = new SBasic(args[0]);
+			SBasic ob = new SBasic(path);
 			ob.run();
-		} catch (InterpreterException exc) {
+		} catch(InterpreterException exc) {
 			System.out.println(exc);
 		}
 	}
