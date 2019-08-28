@@ -54,6 +54,25 @@ more trouble and effort. Of course, that is the art of Java!
 
 ### Understanding Internet Downloads
 
+### An Overview of the Download Manager
+
+다운로드 관리자는 자바의 스윙 라이브러리를 기반으로 간단한 효율적인 GUI 인터페이스를 사용한다.
+다운로드 관리자 창은 Figure 4-1에 보여진다.
+스윙의 사용은 산뜻하고, 현대적인 시각과 느낌의 인터페이스를 준다.
+
+GUI는 현재 관리되고 있는 다운로드의 목록을 유지한다.
+목록에서 각 다운로드는 URL, 파일 바이트 크기, 완료에 대한 백분율로 진행되며, 그리고 현재 상태를 보고한다.
+다운로드는 다음의 다른 상태의 하나가 될 수 있다:
+Downloading, Paused, Complete, Error, or Cancelled.
+GUI는 또한 목록에 다운로드를 추가하고, 목록의 각 다운로드의 상태를 바꾸는 제어를 가지고 있다.
+목록에서 다운로드가 선택될 때, 그것의 현재 상태에 의존하며, 그것은 대체로 목록으로부터 paused, resumed, cancelled, 또는 removed가 될 수 있다.
+
+다운로드 관리자는 기능적인 구성요소의 자연스럽게 분리하기 위해 몇 가지 클래스로 구분된다.
+이들은 각각 Download, DownloadsTableModel, ProgressRenderer, DownloadManager 클래스이다.
+DownloadManager 클래스는 GUI 인터페이스를 책임지고, 현재 다운로드의 목록을 보여주기 위해 DownloadsTableModel 과 ProgressRenderer 클래스를 사용한다.
+Download 클래스는 "관리되는" 다운로드를 나타내고 실제로 파일의 다운로딩 수행에 책임을 진다.
+다음 섹션에서, 우리는 이 각각의 클래스들을 자세하게 보여줄 것이고, 그들의 내부 작업을 강조하고, 어떻게 그들이 서로 각각 관계가 있는지 설명할 것이다.
+
 ### The Download Class
 
 Download 클래스는 다운로드 관리자의 일꾼이다.
@@ -71,9 +90,38 @@ Observable 을 상속받고, Runnable 을 구현하는 것을 명심해라.
 
 #### The Download Variables
 
+Download 는 클래스로서 사용되는 다양한 상수를 명시한 몇몇의 static final 변수를 선언하면서 시작한다.
+다음에, 4개의 인스턴스 변수가 선언된다.
+url 변수는 다운로드 될 파일을 위한 인터넷 URL을 저장한다;
+size 변수는 바이트 단위로 다운로드 파일의 크기를 저장한다;
+download 변수는 지금까지 다운로드 된 바이트의 수를 저장한다;
+그리고 status 변수는 다운로드의 현재 상태를 나타낸다.
+
 #### The Download Constructor
+
+Download 의 생성자는 url 인스턴스 변수로 할당되는 URL 객체의 형식에서 다운로드하기 위해 URL로의 참조를 넘겨받는다.
+그것은 남아있는 인스턴스 변수를 그들의 초기 상태로 설정하고, download() 메소드를 호출한다.
+size 는 아직 크기가 없다는 것을 나타내는 -1로 설정된다.
 
 #### The download() Method
 
+download() 메소드는 호출되는 Download 인스턴스에 대한 참조를 전달하여, 새로운 Thread 객체를 생성한다.
+앞에서 말한 바와 같이, 각 다운로드가 독립적으로 실행하는 것은 필수적이다.
+Download 클래스가 독립적으로 실행되기 위해서, 자체의 스레드에서 실행하여야 한다.
+자바는 스레드에 대한 탁월한 내장 지원을 가지고 있고, 스레드를 사용하면 쉽게 사용할 수 있다.
+스레드를 사용하기 위해서, Download 클래스는 run() 메소드를 재정의함으로써 Runnable 인터페이스를 구현한다.
+download() 메소드가 새로운 Thread 인스턴스를 인스턴스화 한 후에, 그것의 생성자 Runnable Download 클래스를 전달하면, 스레드의 start() 메소드를 호출한다.
+start() 메소드를 호출하는 것은 Runnable 인스턴스의(Download 클래스의) run() 메소드가 실행되게 한다. 
+
 #### The run() Method
 
+run() 메소드를 실행할 때, 실제 다운로드가 진행된다.
+그것의 크기와 중요성 때문에, 우리는 그것을 한 라인씩 면밀히 검사할 것이다.
+run() 메소드는 이 줄들과 함께 시작한다:
+
+RandomAccessFile file = null;
+InputStream stream = null;
+try {
+    // Open connection to URL.HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+
+처음에, run()은 다운로드의 네트워크 스트림을 위한 변수를 제공한다.
