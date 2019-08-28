@@ -14,4 +14,10 @@
     - [The Small BASIC Interpreter](SBasic.java)
     - [Demonstrate the Small BASIC Interpreter](SBDemo.java)
 
-4. 
+4. [**Creating a Download Manager in Java**](Art_of_Java_Ch4.md)
+
+    - [The Download Class](Download.java)
+    - [The ProgressRenderer Class](ProgressRenderer.java)
+    - [The DownloadsTableModel Class](DownloadsTableModel.java)
+    - [The DownloadManager Class](DownloadManager.java)
+
