@@ -4,20 +4,20 @@
 
 1. [**The Genius of Java**](Chapter1/Art_of_Java_Ch1.md)
 
-2. [**A Recursive-Descent Expression Parser**](\Chapter2\Art_of_Java_Ch2.md)
+2. [**A Recursive-Descent Expression Parser**](Chapter2/Art_of_Java_Ch2.md)
 
-    - [A simple expression parser](A_Simple_Expression_Parser.java)
-    - [A simple calculator applet](Calc.java)
+    - [A simple expression parser](Chapter2/A_Simple_Expression_Parser.java)
+    - [A simple calculator applet](Chapter2/Calc.java)
 
-3. [**Implementing Language Interpreters in Java**](Art_of_Java_Ch3.md)
+3. [**Implementing Language Interpreters in Java**](Chapter3/Art_of_Java_Ch3.md)
 
-    - [The Small BASIC Interpreter](SBasic.java)
-    - [Demonstrate the Small BASIC Interpreter](SBDemo.java)
+    - [The Small BASIC Interpreter](Chapter3/SBasic.java)
+    - [Demonstrate the Small BASIC Interpreter](Chapter3/SBDemo.java)
 
-4. [**Creating a Download Manager in Java**](Art_of_Java_Ch4.md)
+4. [**Creating a Download Manager in Java**](Chapter4/Art_of_Java_Ch4.md)
 
-    - [The Download Class](Download.java)
-    - [The ProgressRenderer Class](ProgressRenderer.java)
-    - [The DownloadsTableModel Class](DownloadsTableModel.java)
-    - [The DownloadManager Class](DownloadManager.java)
+    - [The Download Class](Chapter4/Download.java)
+    - [The ProgressRenderer Class](Chapter4/ProgressRenderer.java)
+    - [The DownloadsTableModel Class](Chapter4/DownloadsTableModel.java)
+    - [The DownloadManager Class](Chapter4/DownloadManager.java)
 
