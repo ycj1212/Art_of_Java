@@ -2,9 +2,9 @@
 
 ## Contents
 
-1. [**The Genius of Java**](\Chapter1\Art_of_Java_Ch1.md)
+1. [**The Genius of Java**](tree\master\Chapter1\Art_of_Java_Ch1.md)
 
-2. [**A Recursive-Descent Expression Parser**](Art_of_Java_Ch2.md)
+2. [**A Recursive-Descent Expression Parser**](\Chapter2\Art_of_Java_Ch2.md)
 
     - [A simple expression parser](A_Simple_Expression_Parser.java)
     - [A simple calculator applet](Calc.java)
