@@ -55,8 +55,20 @@ public class DownloadManager extends JFrame implements Observer
         });
         fileMenu.add(fileExitMenuItem);
         menuBar.add(fileMenu);
-        setJMenuBar(menuBer);
+        setJMenuBar(menuBar);
 
+        // Set up add panel.
+        JPanel addPanel = new JPanel();
+        addTextField = new JTextField(30);
+        addPanel.add(addTextField);
+        JButton addButton = new JButton("Add Download");
+        addButton.addActionListener(new ActionListener() {
+        	public void actionPerformed(ActionEvent e) {
+        		actionAdd();
+        	}
+        });
+        addPanel.add(addButton);
+        
         // Set up Downloads table.
         tableModel = new DownloadsTableModel();
         table.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
@@ -76,7 +88,7 @@ public class DownloadManager extends JFrame implements Observer
         table.setRowHeight((int) renderer.getPreferredSize().getHeight());
 
         // Set up downloads panel.
-        JPanel downlaodsPanel = new JPanel();
+        JPanel downloadsPanel = new JPanel();
         downloadsPanel.setBorder(BorderFactory.createTitledBorder("Downloads"));
         downloadsPanel.setLayout(new BorderLayout());
         downloadsPanel.add(new JScrollPane(table), BorderLayout.CENTER);
@@ -99,7 +111,7 @@ public class DownloadManager extends JFrame implements Observer
         });
         resumeButton.setEnabled(false);
         buttonsPanel.add(resumeButton);
-        cancelButton = new JButton("Calcel");
+        cancelButton = new JButton("Cancel");
         cancelButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 actionCancel();
@@ -121,141 +133,141 @@ public class DownloadManager extends JFrame implements Observer
         getContentPane().add(addPanel, BorderLayout.NORTH);
         getContentPane().add(downloadsPanel, BorderLayout.CENTER);
         getContentPane().add(buttonsPanel, BorderLayout.SOUTH);
+    }
+    // Exit this program.
+    private void actionExit() {
+        System.exit(0);
+    }
 
-        // Exit this program.
-        private void actionExit() {
-            System.exit(0);
+    // Add a new download.
+    private void actionAdd() {
+        URL verifiedUrl = verifyUrl(addTextField.getText());
+        if (verifiedUrl != null) {
+            tableModel.addDownload(new Download(verifiedUrl));
+            addTextField.setText("");   // reset add text field
+        } else {
+            JOptionPane.showMessageDialog(this,
+            "Invalid Download URL", "Error",
+            JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    // Verify download URL.
+    private URL verifyUrl(String url) {
+        // Only allow HTTP URLs.
+        if (!url.toLowerCase().startsWith("http://"))
+            return null;
+
+        // Verify format of URL.
+        URL verifiedUrl = null;
+        try {
+            verifiedUrl = new URL(url);
+        } catch (Exception e) {
+            return null;
         }
 
-        // Add a new download.
-        private void actionAdd() {
-            URL verifiedUrl = verifyUrl(addTextField.getText());
-            if (verifiedUrl != null) {
-                tableModel.addDownload(new Download(verifiedUrl));
-                addTextField.setText("");   // reset add text field
-            } else {
-                JOptionPane.showMessageDialog(this,
-                "Invalid Download URL", "Error",
-                JOptionPane.ERROR_MESSAGE);
-            }
-        }
+        // Make sure URL specifies a file.
+        if (verifiedUrl.getFile().length() < 2)
+            return null;
 
-        // Verify download URL.
-        private URL verifyUrl(String url) {
-            // Only allow HTTP URLs.
-            if (!url.toLowerCase().startsWith("http://"))
-                return;
+        return verifiedUrl;
+    }
 
-            // Verify format of URL.
-            URL verifiedUrl = null;
-            try {
-                verifiedUrl = new URL(url);
-            } catch (Exception e) {
-                return null;
-            }
+    // Called when table row selection changes.
+    private void tableSelectionChanged() {
+        /* Unregister from receiving notifications
+           from the last selected download. */
+        if (selectedDownload != null)
+            selectedDownload.deleteObserver(DownloadManager.this);
 
-            // Make sure URL specifies a file.
-            if (verifiedUrl.getFile().length() < 2)
-                return null;
-
-            return verifiedUrl;
-        }
-
-        // Called when table row selection changes.
-        private void tableSelectionChanged() {
-            /* Unregister from receiving notifications
-               from the last selected download. */
-            if (selectedDownload != null)
-                selectedDownload.deleteObserver(DownloadManager.this);
-
-            /* If not in the middle of clearing a download,
-               set the selected download and register to 
-               receive notifications from it. */
-            if (!clearing) {
-                selectedDownload = tableModel.getDownload(table.getSelectedRow());
-                selectedDownload.addObserver(DownloadManager.this);
-                updateButtons();
-            }
-        }
-
-        // Pause the selection download.
-        private void actionPause() {
-            selectedDownload.pause();
+        /* If not in the middle of clearing a download,
+           set the selected download and register to 
+           receive notifications from it. */
+        if (!clearing) {
+            selectedDownload = tableModel.getDownload(table.getSelectedRow());
+            selectedDownload.addObserver(DownloadManager.this);
             updateButtons();
         }
+    }
 
-        // Resume the selected download.
-        private void actionResume() {
-            selectedDownload.resume();
-            updateButtons();
-        }
+    // Pause the selection download.
+    private void actionPause() {
+        selectedDownload.pause();
+        updateButtons();
+    }
 
-        // Cancel the selected download.
-        private void actionCancel() {
-            selectedDownload.cancel();
-            updateButtons();
-        }
+    // Resume the selected download.
+    private void actionResume() {
+        selectedDownload.resume();
+        updateButtons();
+    }
 
-        // Clear the selected download.
-        private void actionClear() {
-            clearing = true;
-            tableModel.clearDownload(table.getSelectedRow());
-            clearing = false;
-            selectedDownload = null;
-            updateButtons();
-        }
+    // Cancel the selected download.
+    private void actionCancel() {
+        selectedDownload.cancel();
+        updateButtons();
+    }
 
-        /* Update each button's state based off of the
-           currently selected download's status. */
-        private void updateButtons() {
-            if (selectedDownload != null) {
-                int status = selectedDownload.getStatus();
-                switch (status) {
-                    case Download.DOWNLOADING:
-                    pauseButton.setEnabled(true);
-                    resumeButtoon.setEnabled(false);
-                    cancelButton.setEnabled(true);
-                    clearButton.setEnabled(false);
-                    break;
-                    case Download.PAUSED:
-                    pauseButton.setEnabled(false);
-                    resumeButtoon.setEnabled(true);
-                    cancelButton.setEnabled(true);
-                    clearButton.setEnabled(false);
-                    break;
-                    case Download.ERROR:
-                    pauseButton.setEnabled(false);
-                    resumeButtoon.setEnabled(true);
-                    cancelButton.setEnabled(false);
-                    clearButton.setEnabled(true);
-                    break;
-                    default:    // COMPLETE or CANCELLED
-                    pauseButton.setEnabled(false);
-                    resumeButtoon.setEnabled(false);
-                    cancelButton.setEnabled(false);
-                    clearButton.setEnabled(true);
-                }
-            } else {
-                // No download is selected in table.
-                    pauseButton.setEnabled(false);
-                    resumeButtoon.setEnabled(false);
-                    cancelButton.setEnabled(false);
-                    clearButton.setEnabled(false);
+    // Clear the selected download.
+    private void actionClear() {
+        clearing = true;
+        tableModel.clearDownload(table.getSelectedRow());
+        clearing = false;
+        selectedDownload = null;
+        updateButtons();
+    }
+
+    /* Update each button's state based off of the
+       currently selected download's status. */
+    private void updateButtons() {
+        if (selectedDownload != null) {
+            int status = selectedDownload.getStatus();
+            switch (status) {
+                case Download.DOWNLOADING:
+                pauseButton.setEnabled(true);
+                resumeButton.setEnabled(false);
+                cancelButton.setEnabled(true);
+                clearButton.setEnabled(false);
+                break;
+                case Download.PAUSED:
+                pauseButton.setEnabled(false);
+                resumeButton.setEnabled(true);
+                cancelButton.setEnabled(true);
+                clearButton.setEnabled(false);
+                break;
+                case Download.ERROR:
+                pauseButton.setEnabled(false);
+                resumeButton.setEnabled(true);
+                cancelButton.setEnabled(false);
+                clearButton.setEnabled(true);
+                break;
+                default:    // COMPLETE or CANCELLED
+                pauseButton.setEnabled(false);
+                resumeButton.setEnabled(false);
+                cancelButton.setEnabled(false);
+                clearButton.setEnabled(true);
             }
+        } else {
+            // No download is selected in table.
+                pauseButton.setEnabled(false);
+                resumeButton.setEnabled(false);
+                cancelButton.setEnabled(false);
+                clearButton.setEnabled(false);
         }
+    }
 
-        /* Update is called when a Download notifies its
-           observers of any changes. */
-        public void update(Observable o, Object arg) {
-            // Update buttons if the selected download has changed.
-            if (selectedDownload != null && selectedDownload.equals(o))
-                updateButtons();
-        }
+    /* Update is called when a Download notifies its
+       observers of any changes. */
+    @Override
+    public void update(Observable o, Object arg) {
+        // Update buttons if the selected download has changed.
+        if (selectedDownload != null && selectedDownload.equals(o))
+            updateButtons();
+    }
 
-        // Run the Download Manager.
-        public static void main(String[] args) {
-            DownloadManager manager = new DownloadManager();
-            manager.show();
-        }
+    // Run the Download Manager.
+    public static void main(String[] args) {
+        DownloadManager manager = new DownloadManager();
+        manager.show();
     }
 }

@@ -68,8 +68,8 @@ class Download extends Observable implements Runnable {
     }
 
     // Cancel this download.
-    public void calcel() {
-        statue = CANCELLED;
+    public void cancel() {
+        status = CANCELLED;
         stateChanged();
     }
 
@@ -88,7 +88,7 @@ class Download extends Observable implements Runnable {
     // Get file name portion of URL.
     private String getFileName(URL url) {
         String fileName = url.getFile();
-        return fileName.subString(fileName.lastIndexOf('/') + 1);
+        return fileName.substring(fileName.lastIndexOf('/') + 1);
     }
 
     // Download file.
@@ -110,6 +110,11 @@ class Download extends Observable implements Runnable {
             if (connection.getResponseCode() / 100 != 2) {
                 error();
             }
+            
+            // Check for valid content length.
+            int contentLength = connection.getContentLength();
+            if (contentLength < 1)
+            	error();
 
             /* Set te size of this download if it hasn't been already set. */
             if (size == -1) {
@@ -122,7 +127,7 @@ class Download extends Observable implements Runnable {
             file.seek(downloaded);
 
             stream = connection.getInputStream();
-            while (statue == DOWNLOADING) {
+            while (status == DOWNLOADING) {
                 /* Size buffer according to how much of the file is left to download. */
                 byte buffer[];
                 if (size - downloaded > MAX_BUFFER_SIZE) {
