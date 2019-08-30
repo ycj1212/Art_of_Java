@@ -1,0 +1,11 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "CodeLens (Launch) - DownloadManager",
+            "request": "launch",
+            "mainClass": "DownloadManager",
+            "projectName": "Art_of_Java_4003a0e3"
+        }
+    ]
+}
