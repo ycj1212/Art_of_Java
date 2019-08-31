@@ -89,8 +89,7 @@ implements Observer
 		table.setDefaultRenderer(JProgressBar.class, renderer);
 		
 		// Set table's row height large enough to fit JProgressBar.
-		table.setRowHeight(
-		(int) renderer.getPreferredSize().getHeight());
+		table.setRowHeight((int) renderer.getPreferredSize().getHeight());
 		
 		// Set up downloads panel.
 		JPanel downloadsPanel = new JPanel();
@@ -175,7 +174,7 @@ implements Observer
 		}
 		
 		// Make sure URL specifies a file.
-		if (verifiedUrl.getFile().length() < 2)
+		if (verifiedUrl.getFile().length() < 2)	// '/'로 시작하기 때문 ex) /text~
 			return null;
 		
 		return verifiedUrl;
@@ -192,8 +191,7 @@ implements Observer
 		set the selected download and register to
 		receive notifications from it. */
 		if (!clearing) {
-			selectedDownload =
-			tableModel.getDownload(table.getSelectedRow());
+			selectedDownload = tableModel.getDownload(table.getSelectedRow());
 			selectedDownload.addObserver(DownloadManager.this);
 			updateButtons();
 		}
