@@ -1,6 +1,7 @@
 import java.util.*;
 import javax.swing.*;
 import javax.swing.table.*;
+
 // This class manages the download table's data.
 class DownloadsTableModel extends AbstractTableModel
 implements Observer

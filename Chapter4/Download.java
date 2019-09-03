@@ -6,10 +6,10 @@ import java.util.*;
 class Download extends Observable implements Runnable {
 	// Max size of download buffer.
 	private static final int MAX_BUFFER_SIZE = 1024;
-	
+
 	// These are the status names.
 	public static final String STATUSES[] = {"Downloading",
-	"Paused", "Complete", "Cancelled", "Error"};
+	"Paused", "Complete", "Cancelled", "Error", "Reservation"};
 	
 	// These are the status codes.
 	public static final int DOWNLOADING = 0;
@@ -18,20 +18,31 @@ class Download extends Observable implements Runnable {
 	public static final int CANCELLED = 3;
 	public static final int ERROR = 4;
 	
+	public static final int RESERVATION = 5;
+	
 	private URL url; // download URL
 	private int size; // size of download in bytes
 	private int downloaded; // number of bytes downloaded
 	private int status; // current status of download
 	
+	private DownloadManager dm;
+
 	// Constructor for Download.
 	public Download(URL url) {
 		this.url = url;
 		size = -1;
 		downloaded = 0;
 		status = DOWNLOADING;
-		
+			
 		// Begin the download.
-		download();
+		if (dm.getRes().equals(""))
+			download();
+
+		// 예약이라면
+		else {
+			System.out.println("예약실행");
+			reservation();
+		}
 	}
 	
 	// Get this download's URL.
@@ -83,6 +94,17 @@ class Download extends Observable implements Runnable {
 	private void download() {
 		Thread thread = new Thread(this);
 		thread.start();
+	}
+
+	private void reservation() {
+		status = RESERVATION;
+		Thread thread = new Thread(this);
+		while(true){
+			try {
+				thread.sleep(dm.getDt());
+			} catch (Exception e) {}
+		}
+		// status = DOWNLOADING;
 	}
 	
 	// Get file name portion of URL.
